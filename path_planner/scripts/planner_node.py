@@ -19,7 +19,7 @@ class Planner:
         # at the parameter server
         rospy.loginfo("In the planner constructor")
 
-        self.base_frame_id = rospy.get_param("~base_frame_id", "base_footprint")
+        self.base_frame_id = rospy.get_param("~base_frame_id", "base_link")
         self.global_frame_id = rospy.get_param("~global_frame_id", "map")
         self.listener = tf.TransformListener()
         

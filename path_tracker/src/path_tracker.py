@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 
 
@@ -25,10 +25,10 @@ class Turtlebot():
         self.cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 
         self.listener = tf.TransformListener()
-
+        self.mindist = 0.2
 
         # TODO 2: Create a path subscriber and make the turtlebot able to reach a continuous path
-        self.path_subscriber = rospy.Subscriber('/planner/path_goal', Path, self.callbackPath)
+        self.path_subscriber = rospy.Subscriber('/path', Path, self.callbackPath)
         
         self.path = None
         self.current_wp = -1   # Our counter to current waypoint
@@ -38,8 +38,29 @@ class Turtlebot():
         #TODO 2: Define the actions that should be carried out whenever a path is received
         # Hint: If no path is received it is set to None in the constructor (path received) 
         # And also reset the current wp counter (you can set it to the closest point to the robot)
-        
-    
+        self.path = msg
+      
+        self.current_wp=0
+        k=0
+        distance = 0
+        while distance<self.mindist:
+
+            curr_pose =self.path.poses[k]
+            curr_pose.header.frame_id = "map"
+            curr_pose.header.stamp = rospy.Time()
+
+            try:
+                base_goal = self.listener.transformPose('base_link', curr_pose)
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                rospy.loginfo("Problem TF")
+                return
+            distance = math.sqrt((base_goal.pose.position.x)^2 + (base_goal.pose.position.y)^2)
+                                 
+            k+=1
+
+        self.current_wp=0
+        rospy.loginfo("Current waypoint: %d", self.current_wp)
+
    
    
     def command(self,gx, gy):
@@ -47,28 +68,38 @@ class Turtlebot():
 
         goal = PointStamped();
         base_goal = PointStamped();
-        
+        # put the control law here from !!
+        angular = 0.0
+        linear = 0.0
         # TODO 2: If a path has been received, you should ignore
         # gx and gy and get the coordinates from the current waypoint 
         # Before that, you should update the current waypoint if its near enough
+        if self.path is not None:
+
+            goal.header.frame_id = "map";
+
+            goal.header.stamp = rospy.Time();
+
+            goal.point.x = self.path.poses[self.current_wp].pose.position.x
+            goal.point.y = self.path.poses[self.current_wp].pose.position.y
+            goal.point.z = 0.0
+
+            try:
+                base_goal = self.listener.transformPoint('base_link', goal)
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                rospy.loginfo("Problem TF")
+                return
+            
+            angular = math.atan2(base_goal.point.y, base_goal.point.x)
+            if math.fabs(angular)>0.4:
+                angular = 0.4*(angular/math.fabs(angular))
+            if math.fabs(angular)<0.2:
+                linear = 0.1
+            distance = math.sqrt((base_goal.point.x)**2 + (base_goal.point.y)**2)
+            if distance < 0.2:
+                self.curr_wp =self.curr_wp + 1    
+
         
-        goal.header.frame_id = "odom";
-
-        goal.header.stamp = rospy.Time();
-
-        goal.point.x = gx
-        goal.point.y = gy
-        goal.point.z = 0.0
-
-        try:
-          base_goal = self.listener.transformPoint('base_link', goal)
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-          rospy.loginfo("Problem TF")
-          return
-
-        # TODO: put the control law here from !!
-        angular = 0.0
-        linear = 0.0
         rospy.loginfo(angular)
         
         self.publish(linear,angular)
@@ -92,7 +123,7 @@ class Turtlebot():
         rospy.sleep(1)
  
 if __name__ == '__main__':
-    try:
+    #try:
         # initiliaze
         rospy.init_node('robotcontrol', anonymous=False)
 
@@ -103,8 +134,8 @@ if __name__ == '__main__':
         # What function to call when you ctrl + c    
         rospy.on_shutdown(robot.shutdown)
 
-        goalx=float(sys.argv[1])
-        goaly=float(sys.argv[2])
+        goalx=0.0
+        goaly=0.0
 
         # TODO 1: Load more internal parameters such as maximum speed, goal tolerance....
 
@@ -121,5 +152,5 @@ if __name__ == '__main__':
             # wait for 0.1 seconds (10 HZ) and publish again
             r.sleep()
 
-    except:
-        rospy.loginfo("robotcontrol node terminated.")
+    #except:
+    #    rospy.loginfo("robotcontrol node terminated.")
