@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="goal_x" default="3"/>
+  <arg name="goal_y" default="0"/>
+
+  <node name="planner" pkg="path_planner" type="planner_node.py" output="screen">
+    <param name="goal/x" value="$(arg goal_x)" />
+    <param name="goal/y" value="$(arg goal_y)" />
+    <remap from="/goal_pose" to="/move_base_simple/goal"/>
+  </node>
+  
+  	<!--Start the map server for the path planner-->
+    <arg name="init_x" default ="0" />
+    <arg name="init_y" default ="0"/>
+    <arg name="init_a" default ="0" />
+
+    <arg name="map_name" default="loyola_a08.yaml"/>
+    <arg name="map_file" default="$(find path_planner)/maps/$(arg map_name)"/>
+
+ 	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)"/>
+	<node pkg="costmap_2d" type="costmap_2d_node" name="costmap_2d" output="screen">
+        <rosparam command="load" file="$(find path_planner)/cfg/global_costmap_params.yaml" />
+    </node>
+	
+	<!--Start the Montecarlo Localization module-->
+    <arg name="init_x_mcl" default ="$(arg init_x)" />
+    <arg name="init_y_mcl" default ="$(arg init_y)"/>
+    <arg name="init_a_mcl" default ="$(arg init_a)"/>
+	<node pkg="amcl" type="amcl" name="amcl">
+		<param name="initial_pose_x" value="$(arg init_x_mcl)" /> 
+    <param name="initial_pose_y" value="$(arg init_y_mcl)" />
+		<param name="initial_pose_a" value="$(arg init_a_mcl)" />
+	</node>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find path_planner)/cfg/path_monitor.rviz"/>
+
+</launch>
+
