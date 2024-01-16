@@ -5,6 +5,7 @@
     <arg name="init_x" default ="0.5" />
     <arg name="init_y" default ="0.7"/>
     <arg name="init_a" default ="1.3" />
+    <arg name="rviz" default ="true" />
 
     <arg name="map_name" default="loyola_c108_c109.yaml"/>
     <arg name="map_file" default="$(find path_planner)/maps/$(arg map_name)"/>
@@ -18,12 +19,17 @@
     <arg name="init_x_mcl" default ="$(arg init_x)" />
     <arg name="init_y_mcl" default ="$(arg init_y)"/>
     <arg name="init_a_mcl" default ="$(arg init_a)"/>
+    
 	<node pkg="amcl" type="amcl" name="amcl">
 		<param name="initial_pose_x" value="$(arg init_x_mcl)" /> 
     <param name="initial_pose_y" value="$(arg init_y_mcl)" />
 		<param name="initial_pose_a" value="$(arg init_a_mcl)" />
+    <param name="laser_z_hit" value="0.98"/>
+    <param name="laser_z_short" value="0.05"/>
+    <param name="laser_lambda_short" value="0.05"/>
+
 	</node>
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find path_planner)/cfg/path_monitor.rviz"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find path_planner)/cfg/path_monitor.rviz" if="$(arg rviz)"/>
 
 </launch>
