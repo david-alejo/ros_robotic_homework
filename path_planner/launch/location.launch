@@ -22,6 +22,15 @@
 		<param name="initial_pose_x" value="$(arg init_x_mcl)" /> 
     <param name="initial_pose_y" value="$(arg init_y_mcl)" />
 		<param name="initial_pose_a" value="$(arg init_a_mcl)" />
+    <param name="laser_z_hit" value="0.98"/>
+    <param name="laser_z_short" value="0.05"/>
+    <param name="laser_lambda_short" value="0.05"/>
+    <param name="laser_sigma_hit" value="0.1"/>
+    <param name="odom_alpha1" value="0.25"/>
+    <param name="odom_alpha2" value="0.25"/>
+    <param name="odom_alpha3" value="0.25"/>
+    <param name="odom_alpha4" value="0.25"/>
+    <param name="update_min_d" value="0.1"/>
 	</node>
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find path_planner)/cfg/path_monitor.rviz"/>
