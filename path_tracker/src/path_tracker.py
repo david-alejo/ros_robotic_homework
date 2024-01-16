@@ -16,6 +16,8 @@ from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PointStamped
 from nav_msgs.msg import Path
 
+
+
 class Turtlebot():
     def __init__(self):
        
@@ -39,9 +41,8 @@ class Turtlebot():
         # Hint: If no path is received it is set to None in the constructor (path received) 
         # And also reset the current wp counter (you can set it to the closest point to the robot)
         self.path = msg
-      
-        self.current_wp=0
         k=0
+        self.curr_wp = 0
         distance = 0
         while distance<self.mindist:
 
@@ -58,17 +59,17 @@ class Turtlebot():
                                  
             k+=1
 
-        self.current_wp=0
-        rospy.loginfo("Current waypoint: %d", self.current_wp)
+        self.curr_wp=k
+        rospy.loginfo("Current waypoint: %d", self.curr_wp)
 
    
    
     def command(self,gx, gy):
         rospy.loginfo("Command")
 
-        goal = PointStamped();
-        base_goal = PointStamped();
-        # put the control law here from !!
+        goal = PointStamped()
+        base_goal = PointStamped()
+        # put the control law here from !! 
         angular = 0.0
         linear = 0.0
         # TODO 2: If a path has been received, you should ignore
@@ -76,12 +77,11 @@ class Turtlebot():
         # Before that, you should update the current waypoint if its near enough
         if self.path is not None:
 
-            goal.header.frame_id = "map";
+            goal.header.frame_id = "map"
 
-            goal.header.stamp = rospy.Time();
-
-            goal.point.x = self.path.poses[self.current_wp].pose.position.x
-            goal.point.y = self.path.poses[self.current_wp].pose.position.y
+            goal.header.stamp = rospy.Time()
+            goal.point.x = self.path.poses[self.curr_wp].pose.position.x
+            goal.point.y = self.path.poses[self.curr_wp].pose.position.y
             goal.point.z = 0.0
 
             try:
@@ -91,13 +91,18 @@ class Turtlebot():
                 return
             
             angular = math.atan2(base_goal.point.y, base_goal.point.x)
-            if math.fabs(angular)>0.4:
-                angular = 0.4*(angular/math.fabs(angular))
+            if math.fabs(angular)>0.3:
+                angular = 0.3*(angular/math.fabs(angular))
             if math.fabs(angular)<0.2:
-                linear = 0.1
+                linear = 0.15
             distance = math.sqrt((base_goal.point.x)**2 + (base_goal.point.y)**2)
-            if distance < 0.2:
-                self.curr_wp =self.curr_wp + 1    
+            if distance < self.mindist:
+                self.curr_wp =self.curr_wp + 5 
+                if self.curr_wp >= len(self.path.poses):
+                    self.curr_wp = len(self.path.poses) - 1
+                    angular = 0.0
+                    linear = 0.0
+                rospy.loginfo("current_wayp: %d",self.curr_wp)
 
         
         rospy.loginfo(angular)
@@ -142,7 +147,7 @@ if __name__ == '__main__':
         print(' Goal to reach: ', goalx, ', ', goaly)
 
         #TurtleBot will stop if we don't keep telling it to move.  How often should we tell it to move? 10 HZ
-        r = rospy.Rate(10);
+        r = rospy.Rate(10)
 
         # as long as you haven't ctrl + c keeping doing...
         while not rospy.is_shutdown():
