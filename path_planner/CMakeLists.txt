@@ -9,7 +9,6 @@ project(path_planner)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   map_server
-  navigation_msgs
   rospy
 )
 
